@@ -1,0 +1,92 @@
+
+/* Constantes que no cambian y son usadas para setear el numero de los pines */
+#define motorIzqPinA  10    // el numero del pin de uno de los cables de motor
+#define motorIzqPinB  9    // el numero del pin del otro cable del motor
+#define motorDerPinA  5   // el numero del pin de uno de los cables de motor
+#define motorDerPinB  6    // el numero del pin del otro cable del motor
+#define sensorIzq  2       // el numero del pin del sensor que interrumpe izquierdo
+#define sensorDer  3       // el numero del pin del sensor que interrumpe derecho
+#define pulsador   12      // el numero del pin del pulsador
+
+/*variables que cambian su valor*/
+
+bool detenido = false;
+bool girarDer = true;
+bool girarIzq = false;
+bool girarDerPreInterrupcion;
+bool girarIzqPreInterrupcion;
+
+/* setup inicial*/
+void setup() {
+  pinMode(motorIzqPinA,OUTPUT);
+  pinMode(motorIzqPinB,OUTPUT); //masa motor izquierdo
+  analogWrite(motorIzqPinB, 0); //seteo a 0 pin masa motor izquierdo
+  pinMode(motorDerPinA,OUTPUT);
+  pinMode(motorDerPinB,OUTPUT); //masa motor derecho
+  analogWrite(motorDerPinB, 0); //seteo a 0 pin masa motor derecho
+  pinMode(sensorIzq, INPUT_PULLUP);
+  pinMode(sensorDer, INPUT_PULLUP);
+  pinMode(pulsador, INPUT_PULLUP); 
+  Serial.begin(9600);
+  attachInterrupt(digitalPinToInterrupt(pulsador),RutinaDeInterrupcion, CHANGE);//si se aprieta el pulsador se llama a la rutina de interrupcion
+  														 
+}
+
+/* loop del programa */
+void loop(){
+  if (girarDer){
+    if (digitalRead(sensorDer)){
+	  girarDer = false;
+      girarIzq = true;
+	}
+  }
+	if (girarIzq){
+		if (digitalRead(sensorIzq)){
+			girarIzq = false;
+			girarDer = true;
+		}
+	}
+		actualizarEstado();
+}
+
+void actualizarEstado(){
+	if (girarDer){
+		analogWrite(motorIzqPinA, 130);
+		analogWrite(motorDerPinA, 75);
+		Serial.println("girando a la derecha");
+	}
+	if (girarIzq){ 
+		analogWrite(motorIzqPinA, 75);
+		analogWrite(motorDerPinA, 130);
+		Serial.println("girando a la izquierda");
+	}
+	if (detenido){
+		analogWrite(motorIzqPinA, 0);
+		analogWrite(motorDerPinA, 0);
+		Serial.println("detenido");
+	}
+}
+
+void RutinaDeInterrupcion(){
+	if (detenido){
+		girarDer = girarDerPreInterrupcion;
+		girarIzq = girarIzqPreInterrupcion;
+		actualizarEstado();
+	}
+	else {
+		girarDerPreInterrupcion = girarDer; // guarda el valor que tenia la variable antes de la interrupcion
+		girarIzqPreInterrupcion = girarIzq; 
+		detenido = true;
+		girarDer = false;
+		girarIzq = false;
+		actualizarEstado();
+	}
+}
+	
+	
+	
+	
+	
+	
+	
+
